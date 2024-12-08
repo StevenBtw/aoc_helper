@@ -1,6 +1,6 @@
 # 🎄 Advent of Code Helper
 
-A magical helper script that takes the grunt work out of Advent of Code! No more manual copy-pasting or browser switching - just pure problem-solving fun.
+One of the challenges of OaC is to break the problem down into smaller manageble parts. One easy "problem" that is the same for each day is copying the input, creating a test case based on te problem text and copy paste submitting solutions. This helper script takes the grunt work out of Advent of Code. No more manual copy-pasting or browser switching just pure problem-solving focus.
 
 ## ✨ Features
 
@@ -70,6 +70,7 @@ Now your solutions will automatically run and submit whenever you save! 🚀
 - View problems locally: Open `http://localhost:8000` after starting
 - Solutions auto-submit when you save `solution1.txt` or `solution2.txt`
 - Check terminal for submission results and any wait times
+- Enhance your problem viewer with custom logic for an even better experience.
 
 Happy coding! 🎄✨
 
