@@ -13,6 +13,15 @@ import json
 # Your session cookie from adventofcode.com
 SESSION_ID = ""
 
+# Request headers with proper User-Agent
+HEADERS = {
+    'User-Agent': 'github.com/your-username/aoc_helper by your-email@example.com'  # TODO: Update with your info
+}
+
+# Rate limiting settings
+MIN_REQUEST_INTERVAL = 15  # Minimum seconds between requests
+last_request_time = 0
+
 # Global variables for problem text
 problem_data = {
     "part1": None,
@@ -20,7 +29,18 @@ problem_data = {
     "day": None
 }
 
+def throttle_request():
+    """Ensures minimum delay between requests to respect rate limits."""
+    global last_request_time
+    current_time = time.time()
+    time_since_last = current_time - last_request_time
+    if time_since_last < MIN_REQUEST_INTERVAL:
+        sleep_time = MIN_REQUEST_INTERVAL - time_since_last
+        time.sleep(sleep_time)
+    last_request_time = time.time()
+
 class ProblemHandler(SimpleHTTPRequestHandler):
+    """Handles HTTP requests for the local problem viewer."""
     def do_GET(self):
         if self.path == '/':
             self.send_response(200)
@@ -45,6 +65,7 @@ class ProblemHandler(SimpleHTTPRequestHandler):
         pass
 
 def start_server(port=8000):
+    """Starts local HTTP server for problem viewing."""
     server = HTTPServer(('localhost', port), ProblemHandler)
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.daemon = True
@@ -52,6 +73,7 @@ def start_server(port=8000):
     return server
 
 def create_html_template(day):
+    """Creates HTML template for problem viewing."""
     html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -119,10 +141,12 @@ def create_html_template(day):
         f.write(html)
 
 def fetch_with_retry(url, cookies, max_retries=float('inf')):
+    """Makes HTTP GET request with retry logic and rate limiting."""
+    throttle_request()  # Ensure minimum delay between requests
     retries = 0
     while True:
         try:
-            response = requests.get(url, cookies=cookies)
+            response = requests.get(url, cookies=cookies, headers=HEADERS)
             if response.status_code == 200:
                 return response
             print(f"Request failed with status code: {response.status_code}")
@@ -134,10 +158,11 @@ def fetch_with_retry(url, cookies, max_retries=float('inf')):
             print(f"Max retries ({max_retries}) reached. Giving up.")
             return None
         
-        print(f"Retrying in 1 second... (attempt {retries + 1})")
-        time.sleep(1)
+        print(f"Retrying in {MIN_REQUEST_INTERVAL} seconds... (attempt {retries + 1})")
+        time.sleep(MIN_REQUEST_INTERVAL)
 
 def get_next_puzzle_time():
+    """Returns datetime of next puzzle unlock in EST timezone."""
     url = "https://adventofcode.com/2024"
     response = fetch_with_retry(url, {'session': SESSION_ID})
     if not response:
@@ -165,7 +190,7 @@ def get_next_puzzle_time():
     return target
 
 def handle_wait_time(message, part):
-    """Extract wait time from message and handle solution file deletion."""
+    """Extracts wait time from response message and handles solution file."""
     wait_match = re.search(r'wait (\d+)s', message) or re.search(r'have (\d+)s left to wait', message)
     if wait_match:
         wait_time = int(wait_match.group(1))
@@ -177,6 +202,8 @@ def handle_wait_time(message, part):
     return None
 
 def submit_answer(day, part, answer):
+    """Submits solution to AoC and returns (success, message)."""
+    throttle_request()  # Ensure minimum delay between requests
     url = f"https://adventofcode.com/2024/day/{day}/answer"
     data = {
         'level': str(part),
@@ -185,7 +212,7 @@ def submit_answer(day, part, answer):
     cookies = {'session': SESSION_ID}
     
     print(f"\nSubmitting answer for part {part}: {answer}")
-    response = requests.post(url, data=data, cookies=cookies)
+    response = requests.post(url, data=data, cookies=cookies, headers=HEADERS)
     if response.status_code != 200:
         return False, "Failed to submit answer"
 
@@ -209,6 +236,7 @@ def submit_answer(day, part, answer):
         return False, message
 
 def update_problem_text(day):
+    """Fetches problem description and updates global problem_data."""
     base_url = f"https://adventofcode.com/2024/day/{day}"
     cookies = {'session': SESSION_ID}
     
@@ -233,6 +261,7 @@ def update_problem_text(day):
         return False, None
 
 def fetch_input(day, force=False):
+    """Downloads input file for given day if not already cached."""
     if os.path.exists('input.txt') and not force:
         print("Input already exists, skipping...")
         return True
@@ -250,6 +279,7 @@ def fetch_input(day, force=False):
     return True
 
 def extract_test_case(problem_text):
+    """Extracts first code block from problem description as test case."""
     soup = BeautifulSoup(problem_text, 'html.parser')
     code_blocks = soup.find_all('pre')
     if code_blocks:
@@ -257,6 +287,7 @@ def extract_test_case(problem_text):
     return None
 
 def create_solution_template(day, part, problem_text):
+    """Creates Python solution template with extracted test case."""
     test_case = extract_test_case(problem_text)
     if not test_case:
         test_case = "# No test case found in problem description"
@@ -298,6 +329,7 @@ if test_result is not None:
     print(f"Created {filename}")
 
 def monitor_solutions(day):
+    """Monitors and submits solutions as they become available."""
     part1_submitted = False
     part2_submitted = False
     
@@ -346,6 +378,7 @@ def monitor_solutions(day):
             time.sleep(1)  # Wait a bit on error
 
 def fetch_aoc_content(day, force=False):
+    """Sets up problem environment and starts solution monitoring."""
     print("Creating HTML template...")
     create_html_template(day)
     

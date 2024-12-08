@@ -9,7 +9,8 @@ One of the challenges of OaC is to break the problem down into smaller manageble
 - 🌐 Runs a local server to display problems (no more browser tabs!)
 - 🔄 Auto-submits solutions when you save them
 - ⏰ Can wait for puzzle unlock and auto-start
-- 🔁 Handles rate limiting and retries automatically
+- 🔁 Handles rate limiting and retries automatically (15s minimum between requests)
+- 🤝 Follows AoC automation guidelines with proper User-Agent
 
 ## 🎯 Quick Start
 
@@ -19,9 +20,12 @@ One of the challenges of OaC is to break the problem down into smaller manageble
    - Go to Application/Storage > Cookies
    - Copy the `session` cookie value
 
-2. Add your session cookie to the script:
+2. Add your session cookie and contact info to the script:
    ```python
    SESSION_ID = "your_session_cookie_here"
+   HEADERS = {
+       'User-Agent': 'github.com/your-username/aoc_helper by your-email@example.com'
+   }
    ```
 
 3. Run the script for any day:
@@ -74,4 +78,3 @@ Now your solutions will automatically run and submit whenever you save! 🚀
 - Extend the solution scripts that are generated with your favorite libraries for even less typing
 
 Happy coding! 🎄✨
-
