@@ -1,6 +1,6 @@
 # 🎄 Advent of Code Helper
 
-One of the challenges of OaC is to break the problem down into smaller manageble parts. One easy "problem" that is the same for each day is copying the input, creating a test case based on te problem text and copy paste submitting solutions. This helper script takes the boring stuff out of Advent of Code. No more manual copy-pasting or browser switching just full problem-solving focus. This will probably also significantly speed up your submissions. 
+One of the challenges of OaC is to break the problem down into smaller manageble parts. One easy "problem" that is the same for each day is copying the input, creating a test case based on the problem text and copy paste submitting solutions. This helper script takes the boring stuff out of Advent of Code. No more manual copy-pasting or browser switching just full problem-solving focus. This will probably also significantly speed up your submissions. 
 
 ## ✨ Features
 
