@@ -9,6 +9,7 @@ import pytz
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import threading
 import json
+import test_case_extractor
 
 # Your session cookie from adventofcode.com
 SESSION_ID = ""
@@ -278,51 +279,11 @@ def fetch_input(day, force=False):
         f.write(response.text.strip())
     return True
 
-def extract_test_case(problem_text):
-    """Extracts first code block from problem description as test case."""
-    soup = BeautifulSoup(problem_text, 'html.parser')
-    code_blocks = soup.find_all('pre')
-    if code_blocks:
-        return code_blocks[0].text.strip()
-    return None
-
 def create_solution_template(day, part, problem_text):
-    """Creates Python solution template with extracted test case."""
-    test_case = extract_test_case(problem_text)
-    if not test_case:
-        test_case = "# No test case found in problem description"
-
-    template = f"""# Advent of Code 2024 - Day {day} Part {part}
-
-def solve(data):
-    # TODO: Implement solution
-    pass
-
-def parse_input(input_text):
-    return [line.strip() for line in input_text.split('\\n') if line.strip()]
-
-# Test case
-test_input = \"\"\"
-{test_case}
-\"\"\"
-
-# Run test case
-test_data = parse_input(test_input)
-test_result = solve(test_data)
-print(f"Test case result: {{test_result}}")
-
-# If test case passes, run actual input
-if test_result is not None:
-    with open('input.txt', 'r') as f:
-        input_data = parse_input(f.read())
-    result = solve(input_data)
-    print(f"Result: {{result}}")
+    """Create solution template with test case and expected result."""
+    test_case, expected_result = test_case_extractor.extract_test_case(problem_text)
+    template = test_case_extractor.create_solution_template(day, part, test_case, expected_result)
     
-    # Write result to solution file
-    with open(f'solution{part}.txt', 'w') as f:
-        f.write(str(result))
-"""
-
     filename = f'solution{part}_day{day}.py'
     with open(filename, 'w') as f:
         f.write(template)
