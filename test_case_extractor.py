@@ -17,11 +17,17 @@ def find_best_test_case(code_blocks, text):
         # Prefer examples that are explicitly called out
         if re.search(r'example|instance|consider|for example', prev_text, re.IGNORECASE):
             score += 3
-        
+        if re.search(r'final example|larger example|complete example', prev_text, re.IGNORECASE):
+            score += 5  # Prefer final/complete examples
+            
         # Prefer examples that are followed by explanations
         if re.search(r'produces|result|total|sum|count|distance', next_text, re.IGNORECASE):
             score += 2
-        
+            
+        # Prefer examples with rules or sequences
+        if re.search(r'rules?:|sequences?:', prev_text, re.IGNORECASE):
+            score += 4
+            
         # Prefer longer examples as they're usually more complete
         score += len(block_text.split('\n'))
         
@@ -35,10 +41,30 @@ def find_inline_example(text):
     """Find the best inline example in text."""
     inline_matches = re.finditer(r'["`\']((?:[^`"\']|\n){10,})["`\']', text)
     best_example = None
+    best_score = -1
+    
     for match in inline_matches:
         example = match.group(1).strip()
-        if not best_example or len(example) > len(best_example):
+        context = text[max(0, match.start()-50):min(len(text), match.end()+50)]
+        
+        # Score this example
+        score = 0
+        
+        # Prefer examples that are explicitly called out
+        if re.search(r'example|instance|consider', context, re.IGNORECASE):
+            score += 3
+            
+        # Prefer examples that are followed by explanations
+        if re.search(r'produces|result|total|sum', context, re.IGNORECASE):
+            score += 2
+            
+        # Prefer longer examples
+        score += len(example)
+        
+        if score > best_score:
+            best_score = score
             best_example = example
+            
     return best_example
 
 def find_expected_result(text):
@@ -49,7 +75,9 @@ def find_expected_result(text):
         (r'(\d+) times', 1),
         (r'would have (\d+)', 1),
         (r'total of (\d+)', 1),
-        (r'(\d+) (?:stones|positions|reports|locations)', 1),
+        (r'(\d+) (?:stones|positions|reports|locations|antinodes)', 1),
+        (r'appears (\d+) times', 1),
+        (r'occurs [^.!?]* (\d+) times', 1),
         
         # Score patterns
         (r'similarity score [^.!?]* is (\d+)', 1),
@@ -67,11 +95,20 @@ def find_expected_result(text):
         (r'produces (?:a total of )?(\d+)', 1),
         (r'results? in (\d+)', 1),
         (r'equals? (\d+)', 1),
-        (r'\(.*?=\s*(\d+)\)', 1),  # Matches (2*4 + 8*5 = 48)
+        (r'\(.*?=\s*(\d+)\)', 1),
         
         # Would/Will patterns
         (r'would be (\d+)', 1),
         (r'will have (\d+)', 1),
+        
+        # Location/Position patterns
+        (r'(\d+) total unique locations', 1),
+        (r'(\d+) antinodes', 1),
+        (r'(\d+) different positions', 1),
+        
+        # Checksum patterns
+        (r'checksum (?:is|would be) [^.!?]*?(\d+)', 1),
+        (r'checksum [^.!?]* (\d+)', 1),
         
         # Generic patterns
         (r'answer (?:is|would be) (\d+)', 1),
