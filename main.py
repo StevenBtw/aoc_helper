@@ -9,6 +9,7 @@ import pytz
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import threading
 import json
+import problem_text_processor
 import test_case_extractor
 
 # Your session cookie from adventofcode.com
@@ -251,9 +252,9 @@ def update_problem_text(day):
     
     if articles:
         problem_data['day'] = day
-        problem_data['part1'] = str(articles[0])
+        problem_data['part1'] = problem_text_processor.transform_problem_text(str(articles[0]), part=1)
         if len(articles) > 1:
-            problem_data['part2'] = str(articles[1])
+            problem_data['part2'] = problem_text_processor.transform_problem_text(str(articles[1]), part=2)
             print("Part 2 is available!")
             create_solution_template(day, 2, str(articles[1]))
         return True, str(articles[0])
